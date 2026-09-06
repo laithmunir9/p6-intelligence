@@ -9,6 +9,7 @@ import { SummaryStrip } from "../components/SummaryStrip";
 import { UploadRail } from "../components/UploadRail";
 import { WarningSection } from "../components/WarningSection";
 import { ApiError, compareSchedules } from "../lib/api";
+import { DEMO_LABEL, loadDemoFiles } from "../lib/demo";
 import { ActivityChangeReport, ComparisonReport, EvidenceReference } from "../lib/types";
 
 const MAX_FILE_BYTES = 25 * 1024 * 1024;
@@ -21,6 +22,7 @@ export default function Home() {
   const [selectedEvidence, setSelectedEvidence] = useState<EvidenceReference | null>(null);
   const [error, setError] = useState<{ code: string; message: string } | null>(null);
   const [loading, setLoading] = useState(false);
+  const [demoLoading, setDemoLoading] = useState(false);
   const abortRef = useRef<AbortController | null>(null);
 
   const allActivityChanges = useMemo(() => report?.projects.flatMap((project) => project.activity_changes) ?? [], [report]);
@@ -46,20 +48,36 @@ export default function Home() {
   function onFileChange(side: "before" | "after", event: ChangeEvent<HTMLInputElement>) { assignFile(side, event.target.files?.[0] ?? null); }
   function onDrop(side: "before" | "after", event: DragEvent<HTMLDivElement>) { event.preventDefault(); assignFile(side, event.dataTransfer.files?.[0] ?? null); }
 
-  async function compare() {
-    if (!before || !after) { setError({ code: "MISSING_UPLOAD", message: "Select both a before and after XER file to compare." }); return; }
+  async function compareFiles(beforeFile: File, afterFile: File) {
     abortRef.current?.abort();
     abortRef.current = new AbortController();
     setLoading(true); setError(null); setSelectedEvidence(null);
     try {
-      const nextReport = await compareSchedules(before, after, abortRef.current.signal);
+      const nextReport = await compareSchedules(beforeFile, afterFile, abortRef.current.signal);
       setReport(nextReport);
-      setSelected(nextReport.projects[0]?.activity_changes[0] ?? null);
+      const firstMeaningfulChange = nextReport.projects.flatMap((project) => project.activity_changes).find((activity) => activity.status !== "UNCHANGED");
+      setSelected(firstMeaningfulChange ?? nextReport.projects[0]?.activity_changes[0] ?? null);
     } catch (caught) {
       if (caught instanceof DOMException && caught.name === "AbortError") return;
       const apiError = caught as ApiError;
       setError({ code: apiError.code ?? "INTERNAL_ERROR", message: apiError.message ?? "The comparison could not be completed." });
     } finally { setLoading(false); }
+  }
+
+  async function compare() {
+    if (!before || !after) { setError({ code: "MISSING_UPLOAD", message: "Select both a before and after XER file to compare." }); return; }
+    await compareFiles(before, after);
+  }
+
+  async function tryDemo() {
+    setDemoLoading(true); setError(null);
+    try {
+      const demo = await loadDemoFiles();
+      setBefore(demo.before); setAfter(demo.after);
+      await compareFiles(demo.before, demo.after);
+    } catch (caught) {
+      setError({ code: "DEMO_LOAD_FAILED", message: caught instanceof Error ? caught.message : "The synthetic demo could not be loaded." });
+    } finally { setDemoLoading(false); }
   }
 
   function clear() { abortRef.current?.abort(); setBefore(null); setAfter(null); setReport(null); setSelected(null); setSelectedEvidence(null); setError(null); }
@@ -72,10 +90,11 @@ export default function Home() {
       </header>
       <div className="app-content">
         <section className="intro-row">
-          <div><h1>Compare schedule updates</h1><p>Trace activity, relationship, and downstream milestone changes with source evidence.</p></div>
-          {report && <button className="button button-quiet" onClick={clear}>Clear and start over</button>}
+          <div><div className="eyebrow">Read-only schedule analysis</div><h1>Compare schedule updates</h1><p>Trace activity and relationship changes through downstream dependencies, with source-level evidence.</p></div>
+          <div className="intro-actions">{!report && <button className="button button-demo" onClick={tryDemo} disabled={loading || demoLoading}><span aria-hidden="true">▷</span>{demoLoading ? "Loading demo…" : "Try synthetic demo"}</button>}{report && <button className="button button-quiet" onClick={clear}>Clear and start over</button>}</div>
         </section>
         <UploadRail before={before} after={after} loading={loading} onChange={onFileChange} onDrop={onDrop} onCompare={compare} />
+        {!report && !loading && <p className="demo-note"><span className="demo-badge">{DEMO_LABEL}</span> A small substation expansion scenario with transformer delivery, commissioning, and energization changes.</p>}
         {error && <div className="error-banner" role="alert"><strong>{error.code}</strong><span>{error.message}</span></div>}
         {loading && <div className="loading-bar" role="status"><span className="loading-pulse" /> Comparing schedules… Free Render may take a moment to wake up.</div>}
         {report && <>

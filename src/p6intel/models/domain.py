@@ -22,6 +22,7 @@ class ProjectMetadata(DomainModel):
     planned_start: str | None = None
     planned_finish: str | None = None
     calendar_id: str | None = None
+    source_record: SourceRecord | None = None
 
 
 class WBSNode(DomainModel):

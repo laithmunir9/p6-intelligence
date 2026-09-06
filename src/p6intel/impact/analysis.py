@@ -17,10 +17,13 @@ class RelationshipChange:
     after: dict[str, Any] | None
     predecessor_id: str | None
     successor_id: str | None
+    occurrence: int = 0
+    ambiguous: bool = False
 
     def model_dump(self) -> dict[str, Any]:
         return {"status": self.status, "before": self.before, "after": self.after,
-                "predecessor_id": self.predecessor_id, "successor_id": self.successor_id}
+                "predecessor_id": self.predecessor_id, "successor_id": self.successor_id,
+                "occurrence": self.occurrence, "ambiguous": self.ambiguous}
 
 
 @dataclass
@@ -29,11 +32,15 @@ class ImpactReport:
     impacts: list[dict[str, Any]]
     relationship_changes: list[RelationshipChange]
     uncertain_matches: list[ActivityMatch]
+    traversal_limit_reached: bool = False
+    path_limit_reached: bool = False
 
     def model_dump(self) -> dict[str, Any]:
         return {"project_id": self.project_id, "impacts": self.impacts,
                 "relationship_changes": [change.model_dump() for change in self.relationship_changes],
-                "uncertain_matches": self.uncertain_matches}
+                "uncertain_matches": self.uncertain_matches,
+                "traversal_limit_reached": self.traversal_limit_reached,
+                "path_limit_reached": self.path_limit_reached}
 
 
 def _edge_key(predecessor: str | None, successor: str | None) -> tuple[str | None, str | None]:
@@ -42,7 +49,7 @@ def _edge_key(predecessor: str | None, successor: str | None) -> tuple[str | Non
 
 def compare_relationships(before: NormalizedProject, after: NormalizedProject,
                           reconciliation: ReconciliationResult) -> list[RelationshipChange]:
-    """Compare edges using the after-version identity for reconciled activities."""
+    """Compare edges using canonical endpoints and conservative duplicate pairing."""
     mapping = {match["before_activity_id"]: match["after_activity_id"]
                for match in reconciliation.matches
                if match["before_activity_id"] and match["after_activity_id"] and match["status"] != "UNCERTAIN"}
@@ -53,24 +60,47 @@ def compare_relationships(before: NormalizedProject, after: NormalizedProject,
                 "lag_hours": relationship.lag_hours,
                 "source_record": relationship.source_record.model_dump(mode="json") if relationship.source_record else None}
 
-    before_edges = {}
+    before_edges: dict[tuple[str | None, str | None], list[dict[str, Any]]] = {}
     for relationship in before.relationships:
         key = _edge_key(mapping.get(relationship.predecessor_id), mapping.get(relationship.successor_id))
         before_edges.setdefault(key, []).append(describe(relationship, *key))
-    after_edges = {}
+    after_edges: dict[tuple[str | None, str | None], list[dict[str, Any]]] = {}
     for relationship in after.relationships:
         key = _edge_key(relationship.predecessor_id, relationship.successor_id)
         after_edges.setdefault(key, []).append(describe(relationship, *key))
 
-    changes = []
+    changes: list[RelationshipChange] = []
     for key in sorted(set(before_edges) | set(after_edges), key=str):
-        old_list, new_list = before_edges.get(key, []), after_edges.get(key, [])
-        old, new = old_list[0] if old_list else None, new_list[0] if new_list else None
-        if old and new:
-            status = "UNCHANGED" if (old["relationship_type"], old["lag_hours"]) == (new["relationship_type"], new["lag_hours"]) else "MODIFIED"
-        else:
-            status = "DELETED" if old else "ADDED"
-        changes.append(RelationshipChange(status, old, new, key[0], key[1]))
+        old_list = sorted(before_edges.get(key, []), key=lambda edge: (edge["relationship_type"] or "", edge["lag_hours"] or ""))
+        new_list = sorted(after_edges.get(key, []), key=lambda edge: (edge["relationship_type"] or "", edge["lag_hours"] or ""))
+        paired_old: set[int] = set()
+        paired_new: set[int] = set()
+        occurrence = 0
+        # Exact signatures are paired first, so unchanged duplicate edges are stable.
+        for old_index, old in enumerate(old_list):
+            candidates = [new_index for new_index, new in enumerate(new_list)
+                          if new_index not in paired_new and
+                          (old["relationship_type"], old["lag_hours"]) == (new["relationship_type"], new["lag_hours"])]
+            if len(candidates) == 1:
+                new_index = candidates[0]
+                new = new_list[new_index]
+                paired_old.add(old_index); paired_new.add(new_index)
+                changes.append(RelationshipChange("UNCHANGED", old, new, key[0], key[1], occurrence))
+                occurrence += 1
+        remaining_old = [old for index, old in enumerate(old_list) if index not in paired_old]
+        remaining_new = [new for index, new in enumerate(new_list) if index not in paired_new]
+        ambiguous = len(remaining_old) > 1 or len(remaining_new) > 1
+        pair_count = min(len(remaining_old), len(remaining_new))
+        for index in range(pair_count):
+            changes.append(RelationshipChange("UNCERTAIN" if ambiguous else "MODIFIED",
+                                              remaining_old[index], remaining_new[index], key[0], key[1], occurrence, ambiguous))
+            occurrence += 1
+        for old in remaining_old[pair_count:]:
+            changes.append(RelationshipChange("DELETED", old, None, key[0], key[1], occurrence, ambiguous))
+            occurrence += 1
+        for new in remaining_new[pair_count:]:
+            changes.append(RelationshipChange("ADDED", None, new, key[0], key[1], occurrence, ambiguous))
+            occurrence += 1
     return changes
 
 
@@ -91,6 +121,8 @@ def analyze_impact(before: NormalizedProject, after: NormalizedProject,
         changed_after_ids -= uncertain_ids
         changed_before_ids -= uncertain_ids
     impacts = []
+    traversal_limit_reached = False
+    path_limit_reached = False
 
     def evidence_for_paths(graph: DependencyGraph, paths: list[list[str]]) -> list[dict[str, Any]]:
         evidence = []
@@ -122,9 +154,11 @@ def analyze_impact(before: NormalizedProject, after: NormalizedProject,
         if not source_id or source_id not in graph.nodes:
             continue
         downstream = graph.downstream(source_id).activities
+        traversal_limit_reached |= graph.last_query.truncated
         changed_downstream = sorted(set(downstream) & (changed_before_ids if status == "DELETED" else changed_after_ids))
         milestone_ids = [node_id for node_id in downstream if graph.nodes[node_id].is_milestone]
         paths = graph.paths_to_milestones(source_id)
+        path_limit_reached |= graph.last_query.truncated
         impacts.append({"source_activity": source_id, "change_status": status,
                         "confidence": match["confidence"], "uncertain": status == "UNCERTAIN",
                         "downstream_activity_count": len(downstream),
@@ -135,4 +169,5 @@ def analyze_impact(before: NormalizedProject, after: NormalizedProject,
                         "paths": paths,
                         "path_evidence": evidence_for_paths(graph, paths),
                         "source_record": match["after_source_record"] if status != "DELETED" else match["before_source_record"]})
-    return ImpactReport(after.metadata.project_id, impacts, relationship_changes, uncertain)
+    return ImpactReport(after.metadata.project_id, impacts, relationship_changes, uncertain,
+                         traversal_limit_reached, path_limit_reached)

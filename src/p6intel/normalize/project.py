@@ -31,9 +31,10 @@ def normalize(parsed: ParsedXER) -> NormalizedExport:
     relationships = [RelationshipRow.model_validate(row) for row in _rows(parsed, "TASKPRED")]
     calendars = [CalendarRow.model_validate(row) for row in _rows(parsed, "CALENDAR")]
     by_project: dict[str | None, NormalizedProject] = {}
-    for row in projects:
+    for index, row in enumerate(projects):
         metadata = ProjectMetadata(project_id=row.proj_id, short_name=row.proj_short_name, name=row.proj_name,
-                                    planned_start=row.plan_start_date, planned_finish=row.plan_end_date, calendar_id=row.clndr_id)
+                                    planned_start=row.plan_start_date, planned_finish=row.plan_end_date, calendar_id=row.clndr_id,
+                                    source_record=_source(parsed, "PROJECT", index))
         by_project[row.proj_id] = NormalizedProject(metadata=metadata)
     if not by_project and (wbs or activities):
         by_project[None] = NormalizedProject(metadata=ProjectMetadata())

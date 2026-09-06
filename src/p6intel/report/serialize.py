@@ -31,7 +31,7 @@ def _relationship_report(change: RelationshipChange, registry: EvidenceRegistry,
     after_ref = _register_dict(registry, "after", change.after.get("source_record") if change.after else None)
     refs.extend(ref for ref in (before_ref, after_ref) if ref)
     return RelationshipChangeReport(status=change.status, identity_before=identity(change.before),
-                                    identity_after=identity(change.after), evidence_refs=refs)
+                                    identity_after=identity(change.after), ambiguous=change.ambiguous, evidence_refs=refs)
 
 
 def build_project_report(reconciliation: ReconciliationResult, impact: AnalysisImpactReport | None,
@@ -48,13 +48,8 @@ def build_project_report(reconciliation: ReconciliationResult, impact: AnalysisI
 
     relationship_reports = []
     if impact:
-        seen: dict[tuple[Any, ...], int] = {}
         for relationship in impact.relationship_changes:
-            key = tuple((relationship.before or relationship.after or {}).get(field)
-                        for field in ("predecessor_id", "successor_id", "relationship_type", "lag_hours"))
-            occurrence = seen.get(key, 0)
-            seen[key] = occurrence + 1
-            relationship_reports.append(_relationship_report(relationship, registry, occurrence))
+            relationship_reports.append(_relationship_report(relationship, registry, relationship.occurrence))
 
     impacts = []
     warnings = []

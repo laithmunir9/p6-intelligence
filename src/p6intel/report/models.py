@@ -60,6 +60,16 @@ class RelationshipChangeReport(ReportModel):
     status: str
     identity_before: RelationshipIdentity | None = None
     identity_after: RelationshipIdentity | None = None
+    ambiguous: bool = False
+    evidence_refs: list[EvidenceReference] = Field(default_factory=list)
+
+
+class UnresolvedRelationshipReport(ReportModel):
+    predecessor_id: str | None = None
+    successor_id: str | None = None
+    relationship_type: str | None = None
+    lag_hours: str | None = None
+    reason: str
     evidence_refs: list[EvidenceReference] = Field(default_factory=list)
 
 
@@ -95,7 +105,10 @@ class UncertaintyReport(ReportModel):
 
 class ReportWarning(ReportModel):
     code: str
+    severity: Literal["INFO", "WARNING", "ERROR"] = "WARNING"
     message: str
+    project_id: str | None = None
+    activity_ids: list[str] = Field(default_factory=list)
     evidence_refs: list[EvidenceReference] = Field(default_factory=list)
 
 
@@ -106,6 +119,8 @@ class ProjectReport(ReportModel):
     relationship_changes: list[RelationshipChangeReport] = Field(default_factory=list)
     impacts: list[ImpactReport] = Field(default_factory=list)
     uncertainty: UncertaintyReport | None = None
+    unresolved_relationships: list[UnresolvedRelationshipReport] = Field(default_factory=list)
+    evidence_refs: list[EvidenceReference] = Field(default_factory=list)
     warnings: list[ReportWarning] = Field(default_factory=list)
 
 

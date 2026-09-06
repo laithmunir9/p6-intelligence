@@ -52,6 +52,19 @@ Endpoints:
 
 The default per-file upload limit is 50 MiB. Set `P6INTEL_MAX_UPLOAD_MB` to change it. CORS is disabled unless `P6INTEL_CORS_ORIGINS` is set to a comma-separated allowlist of origins; wildcard CORS is not enabled by default.
 
+## Prototype deployment
+
+The read-only API is deployed at `https://p6-intelligence.onrender.com`.
+
+```bash
+curl https://p6-intelligence.onrender.com/health
+curl -X POST https://p6-intelligence.onrender.com/v1/compare \
+  -F before=@before.xer \
+  -F after=@after.xer
+```
+
+The public prototype uses one Uvicorn process and limits each uploaded XER file to 25 MiB. Large comparisons may consume significant CPU and memory.
+
 Activity reconciliation is available as a separate API:
 
 ```python

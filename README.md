@@ -37,6 +37,21 @@ The system preserves P6-exported dates, durations, float, critical flags, relati
 
 Known limitations include conservative project-ID matching, unresolved edges being excluded from graph traversal, and limited automatic pairing of ambiguous duplicate relationships.
 
+## Read-only API
+
+Run locally with:
+
+```bash
+uvicorn p6intel.api.app:app --reload
+```
+
+Endpoints:
+
+- `GET /health` returns service and report-schema status.
+- `POST /v1/compare` accepts `before` and `after` XER files as multipart uploads and returns the canonical `ComparisonReport` JSON.
+
+The default per-file upload limit is 50 MiB. Set `P6INTEL_MAX_UPLOAD_MB` to change it. CORS is disabled unless `P6INTEL_CORS_ORIGINS` is set to a comma-separated allowlist of origins; wildcard CORS is not enabled by default.
+
 Activity reconciliation is available as a separate API:
 
 ```python

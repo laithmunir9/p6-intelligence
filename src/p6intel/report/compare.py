@@ -20,6 +20,10 @@ from .models import (
 from .serialize import build_comparison_report, build_project_report
 
 
+class InvalidXERInput(ValueError):
+    """Raised when bytes do not contain a recognizable XER project export."""
+
+
 def _project_id(project: NormalizedProject) -> str | None:
     return project.metadata.project_id
 
@@ -122,4 +126,20 @@ def compare_files(before: str | Path, after: str | Path, **kwargs: Any) -> Compa
     before_export, after_export = normalize(parse_xer(before_bytes)), normalize(parse_xer(after_bytes))
     before_metadata = _schedule_metadata(hashlib.sha256(before_bytes).hexdigest(), before_path.name, len(before_export.projects))
     after_metadata = _schedule_metadata(hashlib.sha256(after_bytes).hexdigest(), after_path.name, len(after_export.projects))
+    return compare_schedules(before_export, after_export, before_metadata, after_metadata, **kwargs)
+
+
+def compare_bytes(before: bytes, after: bytes, before_name: str | None = None,
+                 after_name: str | None = None, **kwargs: Any) -> ComparisonReport:
+    """Compare in-memory XER exports without creating persistent temporary files."""
+    if not before or not after:
+        raise InvalidXERInput("empty XER input")
+    before_parsed, after_parsed = parse_xer(before), parse_xer(after)
+    if "PROJECT" not in before_parsed.tables or "PROJECT" not in after_parsed.tables:
+        raise InvalidXERInput("XER export has no PROJECT records")
+    before_export, after_export = normalize(before_parsed), normalize(after_parsed)
+    if not before_export.projects or not after_export.projects:
+        raise InvalidXERInput("XER export has no projects")
+    before_metadata = _schedule_metadata(hashlib.sha256(before).hexdigest(), before_name, len(before_export.projects))
+    after_metadata = _schedule_metadata(hashlib.sha256(after).hexdigest(), after_name, len(after_export.projects))
     return compare_schedules(before_export, after_export, before_metadata, after_metadata, **kwargs)

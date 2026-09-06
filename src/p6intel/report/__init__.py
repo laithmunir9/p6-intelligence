@@ -1,5 +1,5 @@
 from .evidence import EvidenceRegistry
-from .compare import compare_files, compare_schedules
+from .compare import InvalidXERInput, compare_bytes, compare_files, compare_schedules
 from .models import (
     ActivityChangeReport,
     ComparisonMetadata,
@@ -26,4 +26,5 @@ __all__ = [
     "ProjectReport", "RelationshipChangeReport", "RelationshipIdentity", "ReportWarning",
     "ScheduleMetadata", "UncertaintyReport", "UncertainMatchReport", "UnresolvedRelationshipReport", "build_comparison_report", "build_project_report",
     "compare_files", "compare_schedules",
+    "compare_bytes", "InvalidXERInput",
 ]

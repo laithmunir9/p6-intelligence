@@ -13,7 +13,7 @@ export function ImpactInspector({ change, project, impact, onEvidence }: { chang
   const nodes = path?.activity_ids.slice(0, 8) ?? [];
   const metadata = project?.activity_metadata ?? {};
   const nodeMetadata = (node: string): ActivityMetadata | undefined => {
-    const key = path?.node_metadata_refs[node];
+    const key = path?.node_metadata_refs?.[node];
     return key ? metadata[key] : undefined;
   };
   const source = change.after_activity_id ?? change.before_activity_id ?? "Unknown";

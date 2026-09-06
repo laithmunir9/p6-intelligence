@@ -1,0 +1,22 @@
+%T	PROJECT
+%F	proj_id	proj_short_name	proj_name	clndr_id
+%R	P-A	ALPHA	North Interchange	CA
+%R	P-B	BETA	South Interchange	CB
+%T	PROJWBS
+%F	wbs_id	proj_id	parent_wbs_id	wbs_name
+%R	WA0	P-A		Interchange A
+%R	WA1	P-A	WA0	Bridge
+%R	WB0	P-B		Interchange B
+%T	TASK
+%F	task_id	proj_id	wbs_id	task_name	task_type	status_code
+%R	AA1	P-A	Bridge foundations	TT_Task	TK_Complete
+%R	AB1	P-B	Road diversion	TT_Task	TK_Active
+%R	AB2	P-B	Open to traffic	TT_Mile	TK_NotStart
+%T	TASKPRED
+%F	task_id	pred_task_id	pred_type	lag_hr_cnt
+%R	AB2	AB1	PR_FS	0
+%T	CALENDAR
+%F	clndr_id	clndr_name
+%R	CA	Five Day	
+%R	CB	Seven Day	
+%E

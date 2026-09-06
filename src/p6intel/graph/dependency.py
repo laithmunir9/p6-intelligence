@@ -198,22 +198,32 @@ class DependencyGraph:
 
     def cycles(self) -> list[list[str]]:
         found: list[list[str]] = []
-        visiting: set[str] = set()
-        visited: set[str] = set()
-
-        def visit(current: str, path: list[str]) -> None:
-            visiting.add(current)
-            for edge in self._outgoing.get(current, []):
-                nxt = edge.successor_id
-                if nxt in visiting:
-                    start = path.index(nxt) if nxt in path else 0
-                    found.append(path[start:] + [nxt])
-                elif nxt not in visited:
-                    visit(nxt, path + [nxt])
-            visiting.remove(current)
-            visited.add(current)
-
-        for node_id in sorted(self.nodes):
-            if node_id not in visited:
-                visit(node_id, [node_id])
+        colors: dict[str, int] = {}
+        for start in sorted(self.nodes):
+            if colors.get(start, 0) != 0:
+                continue
+            colors[start] = 1
+            path = [start]
+            positions = {start: 0}
+            stack = [(start, iter(self._outgoing.get(start, [])))]
+            while stack:
+                current, edges = stack[-1]
+                try:
+                    nxt = next(edges).successor_id
+                except StopIteration:
+                    colors[current] = 2
+                    stack.pop()
+                    positions.pop(current, None)
+                    if path and path[-1] == current:
+                        path.pop()
+                    continue
+                color = colors.get(nxt, 0)
+                if color == 1:
+                    start_index = positions.get(nxt, 0)
+                    found.append(path[start_index:] + [nxt])
+                elif color == 0:
+                    colors[nxt] = 1
+                    positions[nxt] = len(path)
+                    path.append(nxt)
+                    stack.append((nxt, iter(self._outgoing.get(nxt, []))))
         return found

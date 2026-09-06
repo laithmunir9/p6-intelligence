@@ -48,6 +48,13 @@ class ActivityChangeReport(ReportModel):
     evidence_refs: list[EvidenceReference] = Field(default_factory=list)
 
 
+class UncertainMatchReport(ReportModel):
+    before_activity_id: str | None = None
+    after_activity_id: str | None = None
+    confidence: float
+    evidence_refs: list[EvidenceReference] = Field(default_factory=list)
+
+
 class RelationshipIdentity(ReportModel):
     predecessor_id: str | None = None
     successor_id: str | None = None
@@ -99,7 +106,7 @@ class ImpactReport(ReportModel):
 
 
 class UncertaintyReport(ReportModel):
-    matches: list[dict[str, Any]] = Field(default_factory=list)
+    matches: list[UncertainMatchReport] = Field(default_factory=list)
     excluded_from_impact: bool = True
 
 

@@ -14,6 +14,7 @@ from .models import (
     RelationshipIdentity,
     ReportWarning,
     ScheduleMetadata,
+    UncertainMatchReport,
     UnresolvedRelationshipReport,
     UncertaintyReport,
 )
@@ -23,6 +24,6 @@ __all__ = [
     "ActivityChangeReport", "ComparisonMetadata", "ComparisonReport", "EvidenceRecord",
     "EvidenceReference", "EvidenceRegistry", "ImpactReport", "MilestoneReport", "PathReport",
     "ProjectReport", "RelationshipChangeReport", "RelationshipIdentity", "ReportWarning",
-    "ScheduleMetadata", "UncertaintyReport", "UnresolvedRelationshipReport", "build_comparison_report", "build_project_report",
+    "ScheduleMetadata", "UncertaintyReport", "UncertainMatchReport", "UnresolvedRelationshipReport", "build_comparison_report", "build_project_report",
     "compare_files", "compare_schedules",
 ]

@@ -56,7 +56,7 @@ def _project(value: NormalizedProject | NormalizedExport) -> NormalizedProject:
 
 
 def _activity_fields(activity: Activity) -> dict[str, str | None]:
-    return {"name": activity.name, "wbs_id": activity.wbs_id, "status": activity.status,
+    return {"code": activity.code, "name": activity.name, "wbs_id": activity.wbs_id, "status": activity.status,
             "start_date": activity.target_start, "finish_date": activity.target_finish,
             "actual_start": activity.actual_start, "actual_finish": activity.actual_finish,
             "duration_hours": activity.remaining_duration_hours}
@@ -74,6 +74,8 @@ def _neighborhood(project: NormalizedProject, activity_id: str | None) -> tuple[
 
 def _context_score(before: Activity, after: Activity, before_project: NormalizedProject, after_project: NormalizedProject) -> float:
     score = 0.0
+    if before.code and before.code == after.code:
+        score += 0.15
     if before.wbs_id and before.wbs_id == after.wbs_id:
         score += 0.15
     if before.target_start and before.target_start == after.target_start:
@@ -164,7 +166,7 @@ def _reconcile_project(before_project: NormalizedProject, after_project: Normali
     # Fuzzy matches are accepted only above threshold and away from a competing candidate.
     for before in sorted(unmatched_before, key=lambda a: (a.activity_id or "", a.name or "")):
         ranked = sorted((( _candidate_score(before, after, before_project, after_project), after)
-                         for after in unmatched_after if after.wbs_id == before.wbs_id), reverse=True, key=lambda item: item[0])
+                         for after in unmatched_after), reverse=True, key=lambda item: item[0])
         if not ranked or ranked[0][0] < config.fuzzy_threshold:
             continue
         best_score, after = ranked[0]

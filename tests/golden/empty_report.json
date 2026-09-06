@@ -1,0 +1,20 @@
+{
+  "schema_version": "1.0",
+  "comparison": {
+    "before": {
+      "source_id": "before",
+      "source_name": null,
+      "encoding": null,
+      "project_count": null
+    },
+    "after": {
+      "source_id": "after",
+      "source_name": null,
+      "encoding": null,
+      "project_count": null
+    }
+  },
+  "projects": [],
+  "warnings": [],
+  "evidence": {}
+}

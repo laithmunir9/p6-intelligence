@@ -11,6 +11,7 @@ from .models import (
     ActivityChangeReport, ComparisonMetadata, ComparisonReport, EvidenceReference,
     ImpactReport, MilestoneReport, PathReport, ProjectReport, RelationshipChangeReport,
     RelationshipIdentity, ReportWarning, ScheduleMetadata, UncertaintyReport,
+    UncertainMatchReport,
 )
 
 
@@ -74,7 +75,17 @@ def build_project_report(reconciliation: ReconciliationResult, impact: AnalysisI
         if impact.uncertain_matches:
             warnings.append(ReportWarning(code="UNCERTAIN_MATCHES",
                                           message="Some activity identities were uncertain and excluded from impact analysis."))
-    uncertainty = UncertaintyReport(matches=list(impact.uncertain_matches), excluded_from_impact=True) if impact and impact.uncertain_matches else None
+    uncertain_reports = []
+    if impact:
+        for match in impact.uncertain_matches:
+            refs = []
+            before_ref = _register_dict(registry, "before", match.get("before_source_record"))
+            after_ref = _register_dict(registry, "after", match.get("after_source_record"))
+            refs.extend(reference for reference in (before_ref, after_ref) if reference)
+            uncertain_reports.append(UncertainMatchReport(before_activity_id=match.get("before_activity_id"),
+                                                          after_activity_id=match.get("after_activity_id"),
+                                                          confidence=match["confidence"], evidence_refs=refs))
+    uncertainty = UncertaintyReport(matches=uncertain_reports, excluded_from_impact=True) if uncertain_reports else None
     return ProjectReport(project_id=reconciliation.project_id, activity_changes=activity_changes,
                           relationship_changes=relationship_reports, impacts=impacts,
                           uncertainty=uncertainty, warnings=warnings)

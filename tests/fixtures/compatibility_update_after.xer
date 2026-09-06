@@ -1,0 +1,15 @@
+%T	TASKPRED
+%F	task_id	pred_task_id	pred_type	lag_hr_cnt
+%R	UM	U1_NEW	PR_FS	8
+%T	PROJECT
+%F	proj_id	proj_name
+%R	UP1	Station Upgrade
+%T	TASK
+%F	task_id	proj_id	wbs_id	task_code	task_name	task_type	target_start_date	target_end_date	remain_drtn_hr_cnt
+%R	U1_NEW	UP1	U1B	UP-001	Enable system extended	TT_Task	2026-05-01	2026-05-12	88
+%R	UM	UP1	U0	UP-M	Final handover	TT_Mile	2026-05-15	2026-05-15	0
+%T	PROJWBS
+%F	wbs_id	proj_id	parent_wbs_id	wbs_name
+%R	U0	UP1		Delivery
+%R	U1B	UP1	U0	Commissioning
+%E

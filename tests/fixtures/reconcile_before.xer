@@ -1,0 +1,16 @@
+%T	PROJECT
+%F	proj_id	proj_short_name	proj_name
+%R	CMP1	COMPARE	Comparison Project
+%T	PROJWBS
+%F	wbs_id	proj_id	parent_wbs_id	wbs_name
+%R	CW1	CMP1		Delivery
+%T	TASK
+%F	task_id	proj_id	wbs_id	task_name	target_start_date	target_end_date	remain_drtn_hr_cnt
+%R	A100	CMP1	CW1	Mobilize site	2026-10-01	2026-10-05	40
+%R	A200	CMP1	CW1	Install panels	2026-10-06	2026-10-20	120
+%R	A300	CMP1	CW1	Commission system	2026-10-21	2026-10-26	48
+%T	TASKPRED
+%F	task_id	pred_task_id	pred_type
+%R	A200	A100	PR_FS
+%R	A300	A200	PR_FS
+%E

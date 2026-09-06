@@ -1,0 +1,19 @@
+%T	PROJECT
+%F	proj_id	proj_short_name	proj_name	plan_start_date	plan_end_date	clndr_id
+%R	PG1	PROGRAM	Airport Program	2026-01-01	2028-12-31	CAL7
+%T	PROJWBS
+%F	wbs_id	proj_id	parent_wbs_id	wbs_short_name	wbs_name
+%R	PGW0	PG1		PROGRAM	Airport Program
+%R	PGW1	PG1	PGW0	TERMINAL	Terminal Expansion
+%R	PGW2	PG1	PGW0	RUNWAY	Runway Rehabilitation
+%T	TASK
+%F	task_id	proj_id	wbs_id	task_code	task_name	status_code	target_start_date	target_end_date	remain_drtn_hr_cnt
+%R	PGA1	PG1	PGW1	TERM-001	Design terminal	TK_Active	2026-01-01	2026-09-30	1440
+%R	PGA2	PG1	PGW2	RWY-001	Mill runway	TK_NotStart	2027-02-01	2027-04-30	480
+%T	TASKPRED
+%F	task_id	pred_task_id	pred_type	lag_hr_cnt
+%R	PGA2	PGA1	PR_SS	40
+%T	CALENDAR
+%F	clndr_id	clndr_name	clndr_type	default_flag
+%R	CAL7	Seven Day Calendar	PROJECT	Y
+%E

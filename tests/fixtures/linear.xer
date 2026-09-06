@@ -1,0 +1,19 @@
+%T	PROJECT
+%F	proj_id	proj_short_name	proj_name	plan_start_date	plan_end_date	clndr_id
+%R	LN1	LINEAR	Linear Utilities	2026-01-05	2026-06-30	CAL1
+%T	PROJWBS
+%F	wbs_id	proj_id	parent_wbs_id	wbs_short_name	wbs_name
+%R	LNW1	LN1		UTIL	Utilities
+%T	TASK
+%F	task_id	proj_id	wbs_id	task_code	task_name	status_code	target_start_date	target_end_date	remain_drtn_hr_cnt
+%R	LNA1	LN1	LNW1	UT-001	Survey route	TK_Active	2026-01-05	2026-01-20	80
+%R	LNA2	LN1	LNW1	UT-002	Lay duct bank	TK_NotStart	2026-01-21	2026-03-20	320
+%R	LNA3	LN1	LNW1	UT-003	Pull cable	TK_NotStart	2026-03-23	2026-04-10	152
+%T	TASKPRED
+%F	task_id	pred_task_id	pred_type	lag_hr_cnt
+%R	LNA2	LNA1	PR_FS	0
+%R	LNA3	LNA2	PR_FS	0
+%T	CALENDAR
+%F	clndr_id	clndr_name	clndr_type	default_flag
+%R	CAL1	Five Day Calendar	PROJECT	Y
+%E

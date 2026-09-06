@@ -1,0 +1,19 @@
+%T	PROJECT
+%F	proj_id	proj_short_name	proj_name	plan_start_date	plan_end_date	clndr_id
+%R	WH1	WAREHOUSE	Regional Warehouse	2026-04-01	2026-12-31	CAL5
+%T	PROJWBS
+%F	wbs_id	proj_id	parent_wbs_id	wbs_short_name	wbs_name
+%R	WHW0	WH1		01	Construction
+%R	WHW1	WH1	WHW0	01.01	Civil Works
+%R	WHW2	WH1	WHW0	01.02	MEP Works
+%T	TASK
+%F	task_id	proj_id	wbs_id	task_code	task_name	status_code	target_start_date	target_end_date	remain_drtn_hr_cnt
+%R	WHA1	WH1	WHW1	CIV-001	Excavate foundation	TK_NotStart	2026-04-01	2026-04-14	96
+%R	WHA2	WH1	WHW2	MEP-001	Install chilled water	TK_NotStart	2026-06-01	2026-07-15	240
+%T	TASKPRED
+%F	task_id	pred_task_id	pred_type	lag_hr_cnt
+%R	WHA2	WHA1	PR_FS	0
+%T	CALENDAR
+%F	clndr_id	clndr_name	clndr_type	default_flag
+%R	CAL5	Six Day Calendar	PROJECT	Y
+%E

@@ -1,0 +1,23 @@
+%T	PROJECT
+%F	proj_id	proj_short_name	proj_name	plan_start_date	plan_end_date	clndr_id
+%R	P1	DEMO	Demo Project	2026-01-01	2026-03-01	C1
+%R	P2	SECOND	Second Project	2026-02-01	2026-04-01	C1
+%T	PROJWBS
+%F	wbs_id	proj_id	parent_wbs_id	wbs_short_name	wbs_name
+%R	W1	P1		ROOT	Root
+%R	W2	P1	W1	PKG	Package
+%T	TASK
+%F	task_id	proj_id	wbs_id	task_code	task_name	target_start_date	target_end_date	custom_field
+%R	A1	P1	W2	A-1	First	2026-01-01	2026-01-05	kept
+%R	A2	P1	W2	A-2	Second	2026-01-06	2026-01-10	
+%T	TASKPRED
+%F	task_id	pred_task_id	pred_type	lag_hr_cnt
+%R	A2	A1	PR_FS	0
+%R	A1	MISSING	PR_FS	8
+%T	CALENDAR
+%F	clndr_id	clndr_name	clndr_type	default_flag
+%R	C1	Standard	PROJECT	Y
+%T	VENDOR_TABLE
+%F	foo	bar
+%R	x	y
+%E

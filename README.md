@@ -65,6 +65,8 @@ curl -X POST https://p6-intelligence.onrender.com/v1/compare \
 
 The public prototype uses one Uvicorn process and limits each uploaded XER file to 25 MiB. Large comparisons may consume significant CPU and memory.
 
+The live frontend is available at `https://web-blush-three-5mmdmoz8k1.vercel.app` and uses the API at `https://p6-intelligence.onrender.com`.
+
 Activity reconciliation is available as a separate API:
 
 ```python

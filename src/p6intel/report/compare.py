@@ -104,7 +104,7 @@ def compare_schedules(before: NormalizedExport, after: NormalizedExport,
         reconciliation = reconcile(before_project, after_project, reconciliation_config)
         impact = analyze_impact(before_project, after_project, reconciliation,
                                 max_paths=max_paths, max_traversals=max_traversals)
-        report = build_project_report(reconciliation, impact, registry)
+        report = build_project_report(reconciliation, impact, registry, before_project, after_project)
         before_reference, before_warnings = _metadata(before_project, "before", registry)
         after_reference, after_warnings = _metadata(after_project, "after", registry)
         report.evidence_refs.extend(reference for reference in (before_reference, after_reference) if reference)

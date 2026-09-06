@@ -18,6 +18,20 @@ export interface ComparisonReport {
   warnings: ReportWarning[];
   evidence: Record<string, EvidenceRecord>;
 }
+export interface ActivityMetadata {
+  side: "before" | "after";
+  activity_id: string;
+  name: string | null;
+  wbs_id: string | null;
+  wbs_name: string | null;
+  is_milestone: boolean;
+  milestone_type: string | null;
+  status: string | null;
+  change_status: ActivityStatus | null;
+  counterpart_activity_id: string | null;
+  confidence: number | null;
+  evidence_refs: EvidenceReference[];
+}
 export interface ActivityChangeReport {
   before_activity_id: string | null;
   after_activity_id: string | null;
@@ -43,6 +57,7 @@ export interface RelationshipChangeReport {
 export interface MilestoneReport { activity_id: string; name: string | null; evidence_refs: EvidenceReference[] }
 export interface PathReport {
   activity_ids: string[];
+  node_metadata_refs: Record<string, string>;
   node_evidence_refs: Record<string, EvidenceReference>;
   edge_evidence_refs: EvidenceReference[];
 }
@@ -72,6 +87,7 @@ export interface ProjectReport {
   project_id: string | null;
   status: ProjectStatus;
   activity_changes: ActivityChangeReport[];
+  activity_metadata: Record<string, ActivityMetadata>;
   relationship_changes: RelationshipChangeReport[];
   impacts: ImpactReport[];
   uncertainty: UncertaintyReport | null;
@@ -83,7 +99,7 @@ export interface ProjectReport {
 export function isComparisonReport(value: unknown): value is ComparisonReport {
   if (!value || typeof value !== "object") return false;
   const report = value as Partial<ComparisonReport>;
-  return report.schema_version === "1.0" && Array.isArray(report.projects) && typeof report.evidence === "object" && report.evidence !== null;
+  return (report.schema_version === "1.0" || report.schema_version === "1.1") && Array.isArray(report.projects) && typeof report.evidence === "object" && report.evidence !== null;
 }
 
 export function activityLabel(change: ActivityChangeReport): string {

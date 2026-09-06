@@ -92,7 +92,7 @@ class ComparisonTests(unittest.TestCase):
         environment["PYTHONPATH"] = str(Path(__file__).parents[1] / "src")
         command = [sys.executable, "-m", "p6intel", "compare", str(before_path), str(after_path)]
         stdout_result = subprocess.run(command, capture_output=True, text=True, check=True, env=environment)
-        self.assertEqual(json.loads(stdout_result.stdout)["schema_version"], "1.0")
+        self.assertEqual(json.loads(stdout_result.stdout)["schema_version"], "1.1")
         with tempfile.TemporaryDirectory() as directory:
             output_path = Path(directory) / "report.json"
             subprocess.run(command + ["--output", str(output_path)], capture_output=True, text=True, check=True, env=environment)

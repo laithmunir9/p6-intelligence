@@ -48,12 +48,25 @@ class ReportTests(unittest.TestCase):
                 after=ScheduleMetadata(source_id="after-xer", source_name="reconcile_after.xer", encoding="utf-8", project_count=1),
             ), [project_report], registry)
         payload = report.model_dump_json()
-        self.assertEqual(json.loads(payload)["schema_version"], "1.0")
+        self.assertEqual(json.loads(payload)["schema_version"], "1.1")
         restored = ComparisonReport.model_validate_json(payload)
         self.assertEqual(restored, report)
         self.assertTrue(restored.projects[0].activity_changes)
         self.assertTrue(restored.projects[0].relationship_changes)
         self.assertTrue(restored.evidence)
+
+    def test_activity_metadata_registry_resolves_path_nodes_and_preserves_identity(self):
+        before, after = milestone_version("A", "Transformer Delivery"), milestone_version("B", "Transformer Delivery revised")
+        report = build_project_report(reconcile(before, after), analyze_impact(before, after, reconcile(before, after)),
+                                      EvidenceRegistry(), before, after)
+        metadata = report.activity_metadata
+        self.assertEqual(metadata["after:B"].name, "Transformer Delivery revised")
+        self.assertTrue(metadata["after:M"].is_milestone)
+        self.assertEqual(metadata["before:A"].counterpart_activity_id, "B")
+        self.assertEqual(metadata["after:B"].counterpart_activity_id, "A")
+        path = report.impacts[0].paths[0]
+        self.assertEqual(path.node_metadata_refs, {"B": "after:B", "M": "after:M"})
+        self.assertTrue(metadata["after:B"].evidence_refs)
 
     def test_evidence_is_deterministic_deduplicated_and_side_specific(self):
         record = SourceRecord(table="TASK", fields=["task_id"], values=["A1"], line_number=4, raw_line="%R\tA1")

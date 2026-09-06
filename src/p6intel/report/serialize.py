@@ -5,10 +5,11 @@ from __future__ import annotations
 from typing import Any
 
 from p6intel.impact.analysis import ImpactReport as AnalysisImpactReport, RelationshipChange
+from p6intel.models.domain import NormalizedProject, WBSNode
 from p6intel.reconcile.activities import ReconciliationResult
 from .evidence import EvidenceRegistry
 from .models import (
-    ActivityChangeReport, ComparisonMetadata, ComparisonReport, EvidenceReference,
+    ActivityChangeReport, ActivityMetadata, ComparisonMetadata, ComparisonReport, EvidenceReference,
     ImpactReport, MilestoneReport, PathReport, ProjectReport, RelationshipChangeReport,
     RelationshipIdentity, ReportWarning, ScheduleMetadata, UncertaintyReport,
     UncertainMatchReport,
@@ -17,6 +18,49 @@ from .models import (
 
 def _register_dict(registry: EvidenceRegistry, side: str, value: dict[str, Any] | None) -> EvidenceReference | None:
     return registry.register(side, value) if value else None
+
+
+def _wbs_names(project: NormalizedProject) -> dict[str, str]:
+    names: dict[str, str] = {}
+
+    def visit(node: WBSNode) -> None:
+        if node.wbs_id and node.name:
+            names[node.wbs_id] = node.name
+        for child in node.children:
+            visit(child)
+
+    for root in project.wbs:
+        visit(root)
+    return names
+
+
+def _activity_registry(before: NormalizedProject, after: NormalizedProject,
+                       reconciliation: ReconciliationResult, registry: EvidenceRegistry
+                       ) -> dict[str, ActivityMetadata]:
+    by_before = {match.get("before_activity_id"): match for match in reconciliation.matches
+                 if match.get("before_activity_id")}
+    by_after = {match.get("after_activity_id"): match for match in reconciliation.matches
+                if match.get("after_activity_id")}
+    result: dict[str, ActivityMetadata] = {}
+    for side, project, matches in (("before", before, by_before), ("after", after, by_after)):
+        wbs_names = _wbs_names(project)
+        for activity in sorted(project.activities, key=lambda value: value.activity_id or ""):
+            if not activity.activity_id:
+                continue
+            match = matches.get(activity.activity_id, {})
+            counterpart = (match.get("after_activity_id") if side == "before"
+                           else match.get("before_activity_id"))
+            reference = _register_dict(registry, side,
+                                       activity.source_record.model_dump(mode="json") if activity.source_record else None)
+            key = f"{side}:{activity.activity_id}"
+            result[key] = ActivityMetadata(
+                side=side, activity_id=activity.activity_id, name=activity.name,
+                wbs_id=activity.wbs_id, wbs_name=wbs_names.get(activity.wbs_id or ""),
+                is_milestone=activity.is_milestone, milestone_type=activity.task_type,
+                status=activity.status, change_status=match.get("status"),
+                counterpart_activity_id=counterpart, confidence=match.get("confidence"),
+                evidence_refs=[reference] if reference else [])
+    return result
 
 
 def _relationship_report(change: RelationshipChange, registry: EvidenceRegistry, occurrence: int) -> RelationshipChangeReport:
@@ -36,7 +80,8 @@ def _relationship_report(change: RelationshipChange, registry: EvidenceRegistry,
 
 
 def build_project_report(reconciliation: ReconciliationResult, impact: AnalysisImpactReport | None,
-                         registry: EvidenceRegistry) -> ProjectReport:
+                         registry: EvidenceRegistry, before_project: NormalizedProject | None = None,
+                         after_project: NormalizedProject | None = None) -> ProjectReport:
     activity_changes = []
     for match in reconciliation.matches:
         refs = []
@@ -52,18 +97,24 @@ def build_project_report(reconciliation: ReconciliationResult, impact: AnalysisI
         for relationship in impact.relationship_changes:
             relationship_reports.append(_relationship_report(relationship, registry, relationship.occurrence))
 
+    activity_metadata = (_activity_registry(before_project, after_project, reconciliation, registry)
+                         if before_project is not None and after_project is not None else {})
     impacts = []
     warnings = []
     if impact:
         for item in impact.impacts:
             path_reports = []
             for evidence in item.get("path_evidence", []):
+                side = "before" if item["change_status"] == "DELETED" else "after"
                 node_refs = {node_id: ref for node_id, raw in evidence.get("node_source_records", {}).items()
-                             if (ref := _register_dict(registry, "after", raw))}
+                             if (ref := _register_dict(registry, side, raw))}
                 edge_refs = [ref for raw in evidence.get("edge_source_records", [])
-                             if (ref := _register_dict(registry, "after", raw))]
-                path_reports.append(PathReport(activity_ids=evidence["path"], node_evidence_refs=node_refs,
-                                               edge_evidence_refs=edge_refs))
+                             if (ref := _register_dict(registry, side, raw))]
+                node_metadata_refs = {node_id: f"{side}:{node_id}" for node_id in evidence["path"]
+                                      if f"{side}:{node_id}" in activity_metadata}
+                path_reports.append(PathReport(activity_ids=evidence["path"],
+                                               node_metadata_refs=node_metadata_refs,
+                                               node_evidence_refs=node_refs, edge_evidence_refs=edge_refs))
             milestone_reports = [MilestoneReport(activity_id=milestone_id)
                                  for milestone_id in item.get("downstream_milestones", [])]
             impacts.append(ImpactReport(source_activity=item["source_activity"], change_status=item["change_status"],
@@ -87,6 +138,7 @@ def build_project_report(reconciliation: ReconciliationResult, impact: AnalysisI
                                                           confidence=match["confidence"], evidence_refs=refs))
     uncertainty = UncertaintyReport(matches=uncertain_reports, excluded_from_impact=True) if uncertain_reports else None
     return ProjectReport(project_id=reconciliation.project_id, activity_changes=activity_changes,
+                          activity_metadata=activity_metadata,
                           relationship_changes=relationship_reports, impacts=impacts,
                           uncertainty=uncertainty, warnings=warnings)
 

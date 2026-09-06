@@ -49,7 +49,7 @@ class CompatibilityTests(unittest.TestCase):
         self.assertEqual(ComparisonReport.model_validate(golden).model_dump(mode="json"), golden)
         report = compare_files(FIXTURES / "compatibility_update_before.xer", FIXTURES / "compatibility_update_after.xer")
         serialized = json.loads(report.model_dump_json())
-        self.assertEqual(serialized["schema_version"], "1.0")
+        self.assertEqual(serialized["schema_version"], "1.1")
         self.assertEqual(json.loads(report.model_dump_json()), json.loads(compare_files(FIXTURES / "compatibility_update_before.xer", FIXTURES / "compatibility_update_after.xer").model_dump_json()))
         for project in report.projects:
             pairs = [(change.before_activity_id, change.after_activity_id)

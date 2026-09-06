@@ -1,7 +1,7 @@
 import { describe, expect, it } from "vitest";
 import { activityLabel, isComparisonReport } from "./types";
 
-describe("schema 1.0 contract helpers", () => {
+describe("schema contract helpers", () => {
   it("accepts a minimally shaped ComparisonReport", () => {
     expect(isComparisonReport({
       schema_version: "1.0",
@@ -10,6 +10,10 @@ describe("schema 1.0 contract helpers", () => {
       warnings: [],
       evidence: {},
     })).toBe(true);
+  });
+
+  it("accepts the enriched 1.1 report version", () => {
+    expect(isComparisonReport({ schema_version: "1.1", projects: [], evidence: {} })).toBe(true);
   });
 
   it("rejects unknown or missing report versions", () => {

@@ -42,7 +42,7 @@ XER exports ──> parser ──> normalized project model ──> reconciliati
 
 The XER parser preserves unknown tables, fields, positional values, and source lines. Normalized activities and relationships retain source records. The report layer deduplicates those records in an evidence registry and exposes stable evidence references.
 
-Report schema version `1.0` is centralized in `p6intel.report.models`.
+Report schema version `1.1` is centralized in `p6intel.report.models`. Version 1.1 adds compact server-provided activity metadata and path references; the existing activity IDs, path arrays, and evidence references remain available.
 
 ## Uncertainty and scope
 

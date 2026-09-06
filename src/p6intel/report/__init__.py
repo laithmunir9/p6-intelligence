@@ -2,6 +2,7 @@ from .evidence import EvidenceRegistry
 from .compare import InvalidXERInput, compare_bytes, compare_files, compare_schedules
 from .models import (
     ActivityChangeReport,
+    ActivityMetadata,
     ComparisonMetadata,
     ComparisonReport,
     EvidenceRecord,
@@ -21,7 +22,7 @@ from .models import (
 from .serialize import build_comparison_report, build_project_report
 
 __all__ = [
-    "ActivityChangeReport", "ComparisonMetadata", "ComparisonReport", "EvidenceRecord",
+    "ActivityChangeReport", "ActivityMetadata", "ComparisonMetadata", "ComparisonReport", "EvidenceRecord",
     "EvidenceReference", "EvidenceRegistry", "ImpactReport", "MilestoneReport", "PathReport",
     "ProjectReport", "RelationshipChangeReport", "RelationshipIdentity", "ReportWarning",
     "ScheduleMetadata", "UncertaintyReport", "UncertainMatchReport", "UnresolvedRelationshipReport", "build_comparison_report", "build_project_report",

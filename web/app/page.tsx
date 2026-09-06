@@ -86,7 +86,7 @@ export default function Home() {
     <main className="app-shell">
       <header className="topbar">
         <div className="brand"><span className="brand-mark" aria-hidden="true">⌬</span><span>P6 Intelligence</span></div>
-        <div className="topbar-status"><span className="status-dot" /> Read-only analysis <span className="topbar-divider" /> Schema 1.0</div>
+        <div className="topbar-status"><span className="status-dot" /> Read-only analysis <span className="topbar-divider" /> Schema {report?.schema_version ?? "1.1"}</div>
       </header>
       <div className="app-content">
         <section className="intro-row">

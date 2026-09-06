@@ -31,13 +31,13 @@ class APITests(unittest.TestCase):
     def test_health(self):
         response = self.client.get("/health")
         self.assertEqual(response.status_code, 200)
-        self.assertEqual(response.json(), {"status": "ok", "service": "p6-intelligence", "report_schema_version": "1.0"})
+        self.assertEqual(response.json(), {"status": "ok", "service": "p6-intelligence", "report_schema_version": "1.1"})
 
     def test_valid_compare_returns_canonical_report(self):
         response = self.client.post("/v1/compare", files=self.files())
         self.assertEqual(response.status_code, 200)
         report = ComparisonReport.model_validate(response.json())
-        self.assertEqual(report.schema_version, "1.0")
+        self.assertEqual(report.schema_version, "1.1")
         expected = compare_files(self.before, self.after).model_dump(mode="json")
         self.assertEqual(response.json(), expected)
 

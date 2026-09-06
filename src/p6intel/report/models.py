@@ -7,7 +7,7 @@ from typing import Any, Literal
 from pydantic import BaseModel, ConfigDict, Field
 
 
-REPORT_SCHEMA_VERSION = "1.0"
+REPORT_SCHEMA_VERSION = "1.1"
 
 
 class ReportModel(BaseModel):
@@ -45,6 +45,22 @@ class ActivityChangeReport(ReportModel):
     status: str
     confidence: float
     changes: dict[str, dict[str, Any]] = Field(default_factory=dict)
+    evidence_refs: list[EvidenceReference] = Field(default_factory=list)
+
+
+class ActivityMetadata(ReportModel):
+    """Compact server-provided activity context used by graph/path consumers."""
+    side: Literal["before", "after"]
+    activity_id: str
+    name: str | None = None
+    wbs_id: str | None = None
+    wbs_name: str | None = None
+    is_milestone: bool = False
+    milestone_type: str | None = None
+    status: str | None = None
+    change_status: str | None = None
+    counterpart_activity_id: str | None = None
+    confidence: float | None = None
     evidence_refs: list[EvidenceReference] = Field(default_factory=list)
 
 
@@ -88,6 +104,7 @@ class MilestoneReport(ReportModel):
 
 class PathReport(ReportModel):
     activity_ids: list[str]
+    node_metadata_refs: dict[str, str] = Field(default_factory=dict)
     node_evidence_refs: dict[str, EvidenceReference] = Field(default_factory=dict)
     edge_evidence_refs: list[EvidenceReference] = Field(default_factory=list)
 
@@ -123,6 +140,7 @@ class ProjectReport(ReportModel):
     project_id: str | None = None
     status: Literal["MATCHED", "ADDED", "DELETED"] = "MATCHED"
     activity_changes: list[ActivityChangeReport] = Field(default_factory=list)
+    activity_metadata: dict[str, ActivityMetadata] = Field(default_factory=dict)
     relationship_changes: list[RelationshipChangeReport] = Field(default_factory=list)
     impacts: list[ImpactReport] = Field(default_factory=list)
     uncertainty: UncertaintyReport | None = None

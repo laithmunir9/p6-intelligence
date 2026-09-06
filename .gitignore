@@ -18,3 +18,5 @@ dist/
 *.out
 tmp/
 debug/
+web/node_modules/
+web/.next/

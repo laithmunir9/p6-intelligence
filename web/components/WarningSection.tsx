@@ -1,0 +1,6 @@
+import { EvidenceReference, ProjectReport, ReportWarning } from "../lib/types";
+
+export function WarningSection({ warnings, projects, onEvidence }: { warnings: ReportWarning[]; projects: ProjectReport[]; onEvidence: (reference: EvidenceReference) => void }) {
+  const allWarnings = [...warnings, ...projects.flatMap((project) => project.warnings)];
+  return <section className="secondary-section panel"><div className="secondary-heading"><span className="secondary-icon warning-symbol">△</span><h2>Warnings <span>{allWarnings.length}</span></h2><div className="secondary-counts"><em className="warning-count">{allWarnings.filter((warning) => warning.severity === "WARNING").length} warnings</em><em className="info-count">{allWarnings.filter((warning) => warning.severity === "INFO").length} info</em></div></div>{allWarnings.length > 0 && <div className="warning-list">{allWarnings.map((warning, index) => <div className="warning-row" key={`${warning.code}-${index}`}><strong>{warning.code}</strong><span>{warning.message}</span><span>{warning.evidence_refs.map((reference) => <button key={reference.evidence_id} className="evidence-mini" onClick={() => onEvidence(reference)}>▧</button>)}</span></div>)}</div>}</section>;
+}

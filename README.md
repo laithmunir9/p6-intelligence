@@ -76,3 +76,15 @@ result = reconcile(before_project, after_project)
 It returns deterministic exact-ID matches first, then conservative WBS/name and configurable fuzzy matches with confidence scores and source-record references.
 
 Milestone 3 adds `DependencyGraph`, `compare_relationships`, and `analyze_impact`. These expose bounded graph context and provenance without recalculating schedule dates, float, or critical path.
+
+## Frontend
+
+The first read-only comparison frontend lives in `web/`.
+
+```bash
+cd web
+npm install
+NEXT_PUBLIC_API_BASE_URL=http://localhost:8000 npm run dev
+```
+
+`NEXT_PUBLIC_API_BASE_URL` selects the backend used by the browser. It defaults to `http://localhost:8000` for local development.

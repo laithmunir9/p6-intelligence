@@ -101,7 +101,7 @@ export default function Home() {
           <SummaryStrip report={report} />
           <section className="analysis-grid">
             <div className="analysis-main">
-              <ActivityTable changes={allActivityChanges} selected={selected} onSelect={setSelected} onEvidence={setSelectedEvidence} />
+              <ActivityTable changes={allActivityChanges} evidence={report.evidence} selected={selected} onSelect={setSelected} onEvidence={setSelectedEvidence} />
               <RelationshipSection projects={report.projects} onEvidence={setSelectedEvidence} />
               <WarningSection warnings={report.warnings} projects={report.projects} onEvidence={setSelectedEvidence} />
             </div>

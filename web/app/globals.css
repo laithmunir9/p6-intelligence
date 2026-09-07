@@ -96,3 +96,7 @@ h1 { font-size:29px; letter-spacing:-.035em; line-height:1.12; }
 .graph-line { top:82px; }
 .graph-arrow { color:#647891; font-size:17px; line-height:18px; }
 .graph-edge { margin-top:5px; }
+
+/* Milestones use the same readable card geometry as the other path nodes. */
+.node-milestone { transform:none; margin:0; }
+.node-milestone b, .node-milestone small { transform:none; }
